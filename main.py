@@ -1470,7 +1470,7 @@ def process_report(xml_content, upload_id):
         
         # Capture the current traceback, format it to a string, and then print it
         traceback_details = traceback.format_exc()
-        details += f'\033[31mError in processing report id: {upload_id}\033[0m [Error: {str(e)}]\nOn line {lineno}: {line.strip()}\n'
+        details += f'Error in processing report id: {upload_id} Error: {str(e)}]\nOn line {lineno}: {line.strip()}\n'
         details += f'Check transaction sequence no: {transaction_seq} in XML file\n'
 
 
@@ -1571,7 +1571,7 @@ def validate_reporting_entity_local(report_entity_name, report_entity_id, report
             df_issues_upload_ids.to_csv(f'{output_path}/{report_entity_name}_upload_ids.csv', index=False)
         
         if xml_reports > 0:
-            details += f'Total of {xml_reports} XML files have been processed.'
+            details += f'Total of {xml_reports} XML files have been processed.\n'
             details += f'There are {len(df_reporting_issues)} issues in {len(df_issues_upload_ids)} reports to be rectified\n'
             details += f'Total flagged transactions: {invalid_transaction_count}\n'
             
