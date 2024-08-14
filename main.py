@@ -79,9 +79,7 @@ local_folder_path = ''
 output_path=''
 reporting_issues = []
 issues_upload_ids = []
-report_entity_name="NDB Securities"
-report_entity_id="001"
-report_entity_swift="001"
+
 details=''
 
 
@@ -771,6 +769,7 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
     transmode_code = transaction.find('transmode_code').text
     transaction_amount_local = transaction.find('amount_local')
     involved_parties = transaction.find('involved_parties')
+    CDS_details = transaction.find('transaction_description')
 
     # Validate transaction date
     if not is_valid_transaction_date(transaction_date, submission_date):
@@ -779,7 +778,9 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'invalid_transaction_date',
             'element': 'date_transaction',
-            'issue': f'transaction date: {transaction_date} invalid for submission date: {submission_date}'
+            'issue': f'transaction date: {transaction_date} invalid for submission date: {submission_date}',
+            'CDS details': f'{CDS_details}'
+            
         })
         
         # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -795,7 +796,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'late_submission',
             'element': 'date_transaction',
-            'issue': f'transaction date: {transaction_date} is a late submission for submission date: {submission_date}'
+            'issue': f'transaction date: {transaction_date} is a late submission for submission date: {submission_date}',
+            'CDS details': f'{CDS_details.text}'
             })
         
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -822,7 +824,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'mandatory but missing/invalid transaction location',
             'element': 'transaction_location',
-            'issue': f'transaction location not given for: {transmode_code} and multiparty credit card transaction: {credit_card_desc}'
+            'issue': f'transaction location not given for: {transmode_code} and multiparty credit card transaction: {credit_card_desc}',
+            'CDS details': f'{CDS_details.text}'
         })
         
         # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -841,7 +844,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'amount_below_1_million',
             'element': 'amount_local',
-            'issue': f'amount {amount} below LKR 1 Mn'
+            'issue': f'amount {amount} below LKR 1 Mn',
+            'CDS details': f'{CDS_details.text}'
             })
         
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -857,7 +861,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'cash_amount_above_extreme_threshold',
                 'element': 'amount_local',
-                'issue': f'CTR amount {amount} extreme value (EFT may be submitted as CTR)'
+                'issue': f'CTR amount {amount} extreme value (EFT may be submitted as CTR)',
+                'CDS details': f'{CDS_details.text}'
                 })
 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -872,7 +877,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'cash_amount_not_round_value',
                 'element': 'amount_local',
-                'issue': f'CTR amount: {amount} not round amount (may be EFT?)'
+                'issue': f'CTR amount: {amount} not round amount (may be EFT?)',
+                'CDS details': f'{CDS_details.text}'
                 })
 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -888,7 +894,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'cash_transaction_both_From_and_To_sides_are_accounts',
             'element': 'transaction',
-            'issue': 'cash transaction both From and To sides are accounts'
+            'issue': 'cash transaction both From and To sides are accounts',
+            'CDS details': f'{CDS_details.text}'
             })
             
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -904,7 +911,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'EFT_transaction_any_of_From_and_To_side_is_not_account',
             'element': 'transaction',
-            'issue': 'EFT transaction any of From and To side is not account'
+            'issue': 'EFT transaction any of From and To side is not account',
+            'CDS details': f'{CDS_details.text}'
             })
             
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -920,7 +928,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'IFT_transaction_both_From_and_To_side_countries_are_LK',
             'element': 'transaction',
-            'issue': 'IFT transaction both From and To side countries are LK'
+            'issue': 'IFT transaction both From and To side countries are LK',
+            'CDS details': f'{CDS_details.text}'
             }) 
             
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -945,7 +954,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'cash_transaction_From_country_not_LK',
             'element': 'from_my_client_country',
-            'issue': f'cash transaction From country: {from_country.text} not LK'
+            'issue': f'cash transaction From country: {from_country.text} not LK',
+            'CDS details': f'{CDS_details.text}'
             })
             
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -964,7 +974,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_person_details',
                 'element': 'from_my_client_person',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -983,7 +994,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_entity_details',
                 'element': 'from_my_client_entity',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1002,7 +1014,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_account_details',
                 'element': 'from_my_client_account',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1019,7 +1032,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'amount_equal_to_account_number',
                 'element': 'from_my_client_account',
-                'issue': f'amount: {amount} equal to account number'
+                'issue': f'amount: {amount} equal to account number',
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1039,7 +1053,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'cash_transaction_From_country_not_LK',
             'element': 'from_country',
-            'issue': f'cash transaction From country: {from_country.text} not LK'
+            'issue': f'cash transaction From country: {from_country.text} not LK',
+            'CDS details': f'{CDS_details.text}'
             })
             
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1058,7 +1073,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_person_details',
                 'element': 'from_person',    
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1077,7 +1093,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_entity_details',
                 'element': 'from_entity',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1096,7 +1113,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_account_details',
                 'element': 'from_account',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1113,7 +1131,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'amount_equal_to_account_number',
                 'element': 'from_account',
-                'issue': f'amount: {amount} equal to account number'
+                'issue': f'amount: {amount} equal to account number',
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1139,7 +1158,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'cash_transaction_To_country_not_LK',
             'element': 'to_my_client_country',
-            'issue': f'cash transaction To country: {to_country.text} not LK'
+            'issue': f'cash transaction To country: {to_country.text} not LK',
+            'CDS details': f'{CDS_details.text}'
             })
             
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1158,7 +1178,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_person_details',
                 'element': 'to_my_client_person',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1177,7 +1198,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_entity_details',
                 'element': 'to_my_client_entity',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1196,7 +1218,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_account_details',
                 'element': 'to_my_client_account',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1213,7 +1236,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'amount_equal_to_account_number',
                 'element': 'to_my_client_account',
-                'issue': f'amount: {amount} equal to account number'
+                'issue': f'amount: {amount} equal to account number',
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1234,7 +1258,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
             'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
             'category': 'cash_transaction_To_country_not_LK',
             'element': 'to_country',
-            'issue': f'cash transaction To country: {to_country.text} not LK'
+            'issue': f'cash transaction To country: {to_country.text} not LK',
+            'CDS details': f'{CDS_details.text}'
             })
             
             # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1253,7 +1278,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_person_details',
                 'element': 'to_person',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1272,7 +1298,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_entity_details',
                 'element': 'to_entity',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1291,7 +1318,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'invalid_account_details',
                 'element': 'to_account',
-                'issue': validation_result
+                'issue': validation_result,
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1308,7 +1336,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                 'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                 'category': 'amount_equal_to_account_number',
                 'element': 'to_account',
-                'issue': f'amount: {amount} equal to account number'
+                'issue': f'amount: {amount} equal to account number',
+                'CDS details': f'{CDS_details.text}'
                  })
                 
                 # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1341,7 +1370,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                     'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                     'category': 'invalid_person_details',
                     'element': 'multi_person',
-                    'issue': validation_result
+                    'issue': validation_result,
+                    'CDS details': f'{CDS_details.text}'
                      })
                     
                     # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1360,7 +1390,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                     'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                     'category': 'invalid_entity_details',
                     'element': 'multi_entity',
-                    'issue': validation_result
+                    'issue': validation_result,
+                    'CDS details': f'{CDS_details.text}'
                      })
                     
                     # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1379,7 +1410,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                     'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                     'category': 'invalid_account_details',
                     'element': 'multi_account',
-                    'issue': validation_result
+                    'issue': validation_result,
+                    'CDS details': f'{CDS_details.text}'
                      }) 
                     
                     # Append upload id of the invalid report to a list for later usage (downloading XML reports)
@@ -1396,7 +1428,8 @@ def process_transaction(transaction_seq, transaction, report_code, upload_id, su
                     'transaction_number': transaction_number.text if transaction_number is not None else f'<transaction> {transaction_seq}',
                     'category': 'amount_equal_to_account_number',
                     'element': 'multi_account',
-                    'issue': f'amount: {amount} equal to account number'
+                    'issue': f'amount: {amount} equal to account number',
+                    'CDS details': f'{CDS_details.text}'
                      })
 
                     # Append upload id of the invalid report to a list for later usage (downloading XML reports)
